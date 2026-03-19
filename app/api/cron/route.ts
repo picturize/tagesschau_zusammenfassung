@@ -3,6 +3,7 @@ import { google } from "googleapis";
 import { kv } from "@vercel/kv";
 import { Resend } from "resend";
 import { GoogleGenAI } from "@google/genai";
+import { revalidatePath } from "next/cache";
 
 const PLAYLIST_ID = "PL4A2F331EE86DCC22";
 
@@ -99,10 +100,10 @@ function buildEmailHtml(summary: Summary): string {
 // ─── Route Handler ─────────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
-  // 1. Auth guard temporär deaktiviert, um den Cron-Job fehlerfrei testen zu können.
+  // 1. Auth guard — Vercel sends "Authorization: Bearer <CRON_SECRET>" automatically
   const authHeader = req.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    console.warn("Auth Header mismatch (or Vercel Env Var missing). Proceeding anyway for debugging...");
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
